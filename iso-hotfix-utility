@@ -198,6 +198,8 @@ run_when_connected() {
 		wait_for_internet_connection
 	fi
 
+	maybe_update_rerun_and_exit
+
 	if [[ 'True' = "${IS_MINIMAL}" ]]; then
 		pacS numix-icon-theme-square numix-icon-theme numix-frost-themes adwaita-icon-theme
 	else
