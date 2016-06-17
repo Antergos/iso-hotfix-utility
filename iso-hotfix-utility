@@ -114,7 +114,6 @@ font_patch() {
 	if [[ 'True' = "${clear_fcache}" ]]; then
 		sudo fc-cache -f -v
 	fi
-
 }
 
 
@@ -131,12 +130,6 @@ start_cnchi() {
 	stop_cnchi && sudo -E cnchi -d -v -s bugsnag &
 
 	return 0;
-}
-
-
-notify_no_updates() {
-	notify_user "${NO_UPDATES_CN}" "${NO_UPDATES_CN_SUB}"
-	sudo sed -i '1d' /etc/pacman.d/antergos-mirrorlist
 }
 
 
@@ -166,6 +159,12 @@ add_or_remove_antbs_mirrorlist() {
 	fi
 
 	sudo rm /var/lib/pacman/db.lck > /dev/null 2>&1
+}
+
+
+notify_no_updates() {
+	notify_user "${NO_UPDATES_CN}" "${NO_UPDATES_CN_SUB}"
+	add_or_remove_antbs_mirrorlist 'remove'
 }
 
 
@@ -226,6 +225,11 @@ run_when_connected() {
 # Do Stuff
 ##
 ###
+
+for supplemental_file in /etc/iso-hotfix-utility.d/**
+do
+	source "${supplemental_file}"
+done
 
 if [[ "$1" = cnchi-dev ]]; then
 	sudo rm -rf /usr/share/cnchi
