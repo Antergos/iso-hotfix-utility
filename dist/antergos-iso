@@ -1,0 +1,170 @@
+#!/bin/bash
+#
+# antergos-iso
+#
+# Copyright © 2013-2016 Antergos
+#
+# This file is part of iso-hotfix-utility.
+#
+# iso-hotfix-utility is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# iso-hotfix-utility is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# The following additional terms are in effect as per Section 7 of the license:
+#
+# The preservation of all legal notices and author attributions in
+# the material or in the Appropriate Legal Notices displayed
+# by works containing it is required.
+#
+# You should have received a copy of the GNU General Public License
+# along with iso-hotfix-utility; if not, see <http://www.gnu.org/licenses/>.
+
+
+###
+##
+# Initialize Variables
+##
+###
+
+APP_ICON=''
+APP_NAME=''
+CNCHI_STARTED='False'
+IS_MINIMAL='False'
+LOG_PATH='/tmp/pacman-boot'
+
+
+###
+##
+# Define Functions
+##
+###
+
+hotfix_setup_environment() {
+	_2log "[antergos-iso] Setting up environment.."
+	
+	APP_NAME='Cnchi'
+	LEVEL='critical'
+	APP_ICON='/usr/share/cnchi/data/images/antergos/antergos-icon.png'
+
+	[[ -f /tmp/.setup-running ]] && CNCHI_STARTED='True'
+	[[ -d /home/antergos/.config/openbox ]] && IS_MINIMAL='True'
+
+	alias pacSyy='sudo pacman -Syy --noconfirm'
+	alias pacS='sudo pacman -S --noconfirm'
+	alias packey_populate='sudo pacman-key --populate archlinux antergos'
+	alias packey_init='sudo pacman-key --init'
+
+	if [[ $(systemd-detect-virt) && 'oracle' = $(systemd-detect-virt -v) ]]; then
+		VBoxClient-all
+	fi
+}
+
+
+font_patch() {
+	local clear_fcache _file file_name
+	clear_fcache='False'
+
+	for _file in /usr/share/cnchi/data/fonts/OpenSans**
+	do
+		file_name=$(basename "${_file}")
+		if ! [[ -f /usr/share/fonts/TTF/"${file_name}" && -f "${_file}" ]]; then
+			sudo cp "${_file}" /usr/share/fonts/TTF
+			clear_fcache='True'
+		fi
+	done
+
+	if [[ 'True' = "${clear_fcache}" ]]; then
+		sudo fc-cache -f -v
+	fi
+}
+
+
+stop_cnchi() {
+	sudo killall -w /usr/bin/cnchi cnchi python && sudo rm /tmp/.setup-running
+	sudo systemctl stop pamac > /dev/null 2>&1
+	sudo rm /var/lib/pacman/db.lck > /dev/null 2>&1
+
+	return 0
+}
+
+
+start_cnchi() {
+	stop_cnchi && sudo -E cnchi -d -v -s bugsnag &
+
+	return 0;
+}
+
+
+add_or_remove_antbs_mirrorlist() {
+	if [[ "$1" = 'add' ]]; then
+		sudo sed -i '1s%^%Server = http://repo.antergos.info/$repo/$arch\n%' /etc/pacman.d/antergos-mirrorlist
+	elif [[ "$1" = 'remove' ]]; then
+		sudo sed -i '1d' /etc/pacman.d/antergos-mirrorlist
+	fi
+
+	sudo rm /var/lib/pacman/db.lck > /dev/null 2>&1
+}
+
+
+notify_no_updates() {
+	_notify_user "${NO_UPDATES_CN}" "${NO_UPDATES_CN_SUB}"
+	add_or_remove_antbs_mirrorlist 'remove'
+}
+
+
+populate_pacman_keyring() {
+	{ ${BASH_ALIASES[packey_populate]} && return 0; } || \
+		{ ${BASH_ALIASES[packey_init]} && ${BASH_ALIASES[packey_populate]} && return 0; } || \
+			return 1
+}
+
+
+hotfix_waiting_for_internet() {
+	start_cnchi
+}
+
+
+hotfix_maybe_update() {
+	add_or_remove_antbs_mirrorlist 'add'
+	${BASH_ALIASES[pacSyy]} iso-hotfix-utility || populate_pacman_keyring && ${BASH_ALIASES[pacSyy]} iso-hotfix-utility
+}
+
+
+hotfix_run_when_connected() {
+	if [[ 'True' = "${IS_MINIMAL}" ]]; then
+		${BASH_ALIASES[pacS]} numix-icon-theme-square numix-icon-theme numix-frost-themes adwaita-icon-theme
+	else
+		sudo modprobe -a spl zfs
+	fi
+
+	local CHECK_UPDATES
+	CHECK_UPDATES=$(sudo checkupdates)
+
+	[[ "${CHECK_UPDATES}" = *'cnchi'* ]] && INSTALL_CNCHI='True'
+
+	if [[ ${INSTALL_CNCHI} = 'True' ]]; then
+		notify_user "${INSTALLING_UPDATES}" "${INSTALLING_UPDATES_SUB}"
+		stop_cnchi
+		${BASH_ALIASES[pacS]} --force cnchi && LEVEL='normal'; _notify_user "${UPDATE_COMPLETE}" "${UPDATE_COMPLETE_SUB}"
+		start_cnchi && CNCHI_RESTARTED='True'
+	else
+		LEVEL='normal'; _notify_no_updates
+	fi
+}
+
+
+hotfix_before_environment_setup() {
+	if [[ "$1" = cnchi-dev ]]; then
+		sudo rm -rf /usr/share/cnchi
+		sudo git clone https://github.com/lots0logs/cnchi-dev.git /usr/share/cnchi
+		cd /usr/share/cnchi && sudo git checkout playing && start_cnchi
+		exit 0
+	fi 
+}
+

@@ -25,27 +25,7 @@
 # You should have received a copy of the GNU General Public License
 # along with iso-hotfix-utility; if not, see <http://www.gnu.org/licenses/>.
 
-export TEXTDOMAIN="CNCHI_UPDATER"
-export GETTEXT='gettext "CNCHI_UPDATER"'
-
-###
-##
-# Translatable Strings
-##
-###
-
-NO_CONNECTION=$(${GETTEXT} "INSTALLER NOTICE:")
-NO_CONNECTION_SUB_STR='You must be connected to the internet to install Antergos. '
-NO_CONNECTION_SUB_STR+='Click the network icon in the top bar to configure your connection.'
-NO_CONNECTION_SUB=$(${GETTEXT} "${NO_CONNECTION_SUB_STR}")
-INSTALLING_UPDATES=$(${GETTEXT} "Installing Updates")
-INSTALLING_UPDATES_SUB=$(${GETTEXT} "Installing available updates.")
-UPDATE_COMPLETE=$(${GETTEXT} "Update Complete")
-UPDATE_COMPLETE_SUB=$(${GETTEXT} "Updates were installed sucessfully. Starting Cnchi...")
-CHECKING_UPDATES=$(${GETTEXT} "Cnchi Automatic Updates")
-CHECKING_UPDATES_SUB=$(${GETTEXT} "Checking for available updates for the Antergos Installer.")
-NO_UPDATES_CN=$(${GETTEXT} "Check was sucessful.")
-NO_UPDATES_CN_SUB=$(${GETTEXT} "You have the latest version. You can proceed with your installation!")
+shopt -s expand_aliases
 
 
 ###
@@ -57,10 +37,10 @@ NO_UPDATES_CN_SUB=$(${GETTEXT} "You have the latest version. You can proceed wit
 NETWORK_ALIVE=1
 NOTIFIED='False'
 SCRIPT_UPDATED='False'
-CNCHI_RESTARTED='False'
 LAST_SENT=''
-CNCHI_ICON=''
-IS_MINIMAL='False'
+APP_ICON=''
+APP_NAME=''
+LEVEL=''
 
 
 ###
@@ -69,156 +49,82 @@ IS_MINIMAL='False'
 ##
 ###
 
-setup_environment() {
+_2log() {
+	echo "====>>>$1<<<===="
+}
+
+
+_setup_environment() {
+	_2log '[iso-hotfix-utility] Setting up environment..'
+
 	NETWORK_ALIVE=$(ping -c1 8.8.8.8 >/dev/null 2>&1; echo $?)
-	CNCHI_ICON='/usr/share/cnchi/data/images/antergos/antergos-icon.png'
 
-	[[ $0 = 'iso-hotfix-utility' ]] && SCRIPT_UPDATED='True'
-	[[ -f /tmp/.setup-running ]] && CNCHI_STARTED='True'
-	[[ -d /home/antergos/.config/openbox ]] && IS_MINIMAL='True'
-
-	alias pacSyy='sudo pacman -Syy --noconfirm'
-	alias pacS='sudo pacman -S --noconfirm'
-	alias packey_populate='sudo pacman-key --populate archlinux antergos'
-	alias packey_init='sudo pacman-key --init'
-	
-	if [[ $(systemd-detect-virt) && 'oracle' = $(systemd-detect-virt -v) ]]; then
-		VBoxClient-all
+	if [[ $0 = 'iso-hotfix-utility' ]]; then
+		SCRIPT_UPDATED='True'
+		_2log '[iso-hotfix-utility] Script has been updated.'
 	fi
 }
 
 
-notify_user() {
+_notify_user() {
 	if [[ "${LAST_SENT}" != '' ]]; then
-		LAST_SENT=$(notify-send.sh -a "Cnchi" -i "${CNCHI_ICON}" -u critical -p -r "${LAST_SENT}" "$1" "$2")
+		LAST_SENT=$(notify-send.sh -a "${APP_NAME}" -i "${APP_ICON}" -u "${LEVEL}" -p -r "${LAST_SENT}" "$1" "$2")
 	else
-		LAST_SENT=$(notify-send.sh -a "Cnchi" -i "${CNCHI_ICON}" -u critical -p "$1" "$2")
+		LAST_SENT=$(notify-send.sh -a "${APP_NAME}" -i "${APP_ICON}" -u "${LEVEL}" -p "$1" "$2")
 	fi
 
-	echo "${LAST_SENT}"
+	_2log "${LAST_SENT}"
 }
 
 
-font_patch() {
-	local clear_fcache='False'
+_maybe_wait_for_internet_connection() {
+	local connected
+	connected='[iso-hotfix-utility] We have internet connection.'
 
-	for file in /usr/share/cnchi/data/fonts/OpenSans**
-	do
-		file_name=$(basename "${file}")
-		if ! [[ -f /usr/share/fonts/TTF/"${file_name}" && -f "${file}" ]]; then
-			sudo cp "${file}" /usr/share/fonts/TTF
-			clear_fcache='True'
+	if [[ "${NETWORK_ALIVE}" = 0 ]]; then
+		_2log "${connected}"
+		return
+	fi
+
+	hotfix_waiting_for_internet
+
+	while [[ "${NETWORK_ALIVE}" != 0 ]]; do
+		if [[ "${NOTIFIED}" = 'False' ]]; then
+			_notify_user "${NO_CONNECTION}" "${NO_CONNECTION_SUB}"
+			NOTIFIED='True'
 		fi
+
+		NETWORK_ALIVE=$(ping -c1 8.8.8.8 >/dev/null 2>&1; echo $?)
+
+		sleep 1;
 	done
 
-	if [[ 'True' = "${clear_fcache}" ]]; then
-		sudo fc-cache -f -v
-	fi
+	_2log "${connected}"
 }
 
 
-stop_cnchi() {
-	sudo killall -w /usr/bin/cnchi cnchi python && sudo rm /tmp/.setup-running
-	sudo systemctl stop pamac > /dev/null 2>&1
-	sudo rm /var/lib/pacman/db.lck > /dev/null 2>&1
-
-	return 0
-}
-
-
-start_cnchi() {
-	stop_cnchi && sudo -E cnchi -d -v -s bugsnag &
-
-	return 0;
-}
-
-
-wait_for_internet_connection() {
-	if [[ "${NETWORK_ALIVE}" != 0 ]]; then
-		start_cnchi
-
-		while [[ "${NETWORK_ALIVE}" != 0 ]]; do
-			if [[ "${NOTIFIED}" = 'False' ]]; then
-				notify_user "${NO_CONNECTION}" "${NO_CONNECTION_SUB}"
-				NOTIFIED='True'
-			fi
-
-			NETWORK_ALIVE=$(ping -c1 8.8.8.8 >/dev/null 2>&1; echo $?)
-
-			sleep 1;
-		done
-	fi
-}
-
-
-add_or_remove_antbs_mirrorlist() {
-	if [[ "$1" = 'add' ]]; then
-		sudo sed -i '1s%^%Server = http://repo.antergos.info/$repo/$arch\n%' /etc/pacman.d/antergos-mirrorlist
-	elif [[ "$1" = 'remove' ]]; then
-		sudo sed -i '1d' /etc/pacman.d/antergos-mirrorlist
-	fi
-
-	sudo rm /var/lib/pacman/db.lck > /dev/null 2>&1
-}
-
-
-notify_no_updates() {
-	notify_user "${NO_UPDATES_CN}" "${NO_UPDATES_CN_SUB}"
-	add_or_remove_antbs_mirrorlist 'remove'
-}
-
-
-populate_pacman_keyring() {
-	{ packey_populate && return 0; } || \
-		{ packey_init && packey_populate && return 0; } || \
-			return 1
-}
-
-
-maybe_update_rerun_and_exit() {
+_maybe_update_rerun_and_exit() {
 	if [[ "${SCRIPT_UPDATED}" = 'True' ]]; then
 		return
 	fi
 
-	add_or_remove_antbs_mirrorlist 'add'
-	notify_user "${CHECKING_UPDATES}" "${CHECKING_UPDATES_SUB}"
-
-	pacSyy iso-hotfix-utility || populate_pacman_keyring && pacSyy iso-hotfix-utility
+	_notify_user "${CHECKING_UPDATES}" "${CHECKING_UPDATES_SUB}"
+	hotfix_maybe_update
 
 	if [[ -f /usr/bin/iso-hotfix-utility ]]; then
-		{ nohup /usr/bin/iso-hotfix-utility & } && exit 0
+		{ nohup /usr/bin/iso-hotfix-utility & >> "${LOG_PATH}" 2>&1; } && exit 0
 	else
-		notify_no_updates
+		_2log '[iso-hotfix-utility] Failed to update hotifx package!'
 	fi
 }
 
 
-run_when_connected() {
-	if [[ "${NETWORK_ALIVE}" != 0 ]]; then
-		wait_for_internet_connection
-	fi
+_run_when_connected() {
+	_maybe_wait_for_internet_connection
 
-	maybe_update_rerun_and_exit
+	_maybe_update_rerun_and_exit
 
-	if [[ 'True' = "${IS_MINIMAL}" ]]; then
-		pacS numix-icon-theme-square numix-icon-theme numix-frost-themes adwaita-icon-theme
-	else
-		sudo modprobe -a spl zfs
-	fi
-
-	local CHECK_UPDATES
-	CHECK_UPDATES=$(sudo checkupdates)
-
-	[[ "${CHECK_UPDATES}" = *'cnchi'* ]] && INSTALL_CNCHI='True'
-
-	if [[ ${INSTALL_CNCHI} = 'True' ]]; then
-		notify_user "${INSTALLING_UPDATES}" "${INSTALLING_UPDATES_SUB}"
-		stop_cnchi
-		pacS --force cnchi && notify_user "${UPDATE_COMPLETE}" "${UPDATE_COMPLETE_SUB}"
-		start_cnchi && CNCHI_RESTARTED='True'
-	else
-		notify_no_updates
-	fi
+	hotfix_run_when_connected
 }
 
 
@@ -228,22 +134,42 @@ run_when_connected() {
 ##
 ###
 
-for supplemental_file in /etc/iso-hotfix-utility.d/**
+# remember whether extglob was originally set, so we know whether to unset it
+shopt -q extglob; extglob_set=$?
+
+# set extglob if it wasn't originally set.
+((extglob_set)) && shopt -s extglob
+
+supplemental_files_i18n=(/etc/iso-hotfix-utility.d/**_i18n)
+supplemental_files=(/etc/iso-hotfix-utility.d/**!(_i18n))
+
+for supplemental_file_i18n in "${supplemental_files_i18n[@]}"
 do
+	# shellcheck source=/dev/null
+	source "${supplemental_file_i18n}"
+done
+
+for supplemental_file in "${supplemental_files[@]}"
+do
+	# shellcheck source=/dev/null
 	source "${supplemental_file}"
 done
 
-if [[ "$1" = cnchi-dev ]]; then
-	sudo rm -rf /usr/share/cnchi
-	sudo git clone https://github.com/lots0logs/cnchi-dev.git /usr/share/cnchi
-	cd /usr/share/cnchi && sudo git checkout playing && start_cnchi
-	exit 0
-fi 
+# unset extglob if it wasn't originally set
+((extglob_set)) && shopt -u extglob
 
-{ setup_environment && run_when_connected; } > /tmp/pacman-boot.log 2>&1 \
+
+hotfix_before_environment_setup "$1"
+
+{ _setup_environment \
+	&& hotfix_setup_environment \
+	&& _run_when_connected \
 	&& sleep 5 \
-	&& { [[ -f /tmp/.setup-running ]] && exit 0; } \
-	|| { start_cnchi && exit 0; }
+	&& [[ -f /tmp/.setup-running ]] \
+	&& exit 0
+} >> /tmp/pacman-boot.log 2>&1;
 
+
+hotfix_run_if_failed
 
 exit 1;
