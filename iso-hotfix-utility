@@ -25,8 +25,6 @@
 # You should have received a copy of the GNU General Public License
 # along with iso-hotfix-utility; if not, see <http://www.gnu.org/licenses/>.
 
-shopt -s expand_aliases
-
 
 ###
 ##
@@ -34,13 +32,16 @@ shopt -s expand_aliases
 ##
 ###
 
-NETWORK_ALIVE=1
-NOTIFIED='False'
-SCRIPT_UPDATED='False'
-LAST_SENT=''
-APP_ICON=''
-APP_NAME=''
-LEVEL=''
+if [[ -z "${_INITIALIZED}" ]]; then
+	NETWORK_ALIVE=1
+	NOTIFIED='False'
+	SCRIPT_UPDATED='False'
+	LAST_SENT=''
+	APP_ICON=''
+	APP_NAME=''
+	LEVEL=''
+	_INITIALIZED='True'
+fi
 
 
 ###
@@ -73,7 +74,7 @@ _notify_user() {
 		LAST_SENT=$(notify-send.sh -a "${APP_NAME}" -i "${APP_ICON}" -u "${LEVEL}" -p "$1" "$2")
 	fi
 
-	_2log "${LAST_SENT}"
+	echo "${LAST_SENT}" > /dev/null
 }
 
 
@@ -140,20 +141,24 @@ shopt -q extglob; extglob_set=$?
 # set extglob if it wasn't originally set.
 ((extglob_set)) && shopt -s extglob
 
+
 supplemental_files_i18n=(/etc/iso-hotfix-utility.d/**_i18n)
 supplemental_files=(/etc/iso-hotfix-utility.d/**!(_i18n))
 
+# Load translatable strings for supplemental files
 for supplemental_file_i18n in "${supplemental_files_i18n[@]}"
 do
 	# shellcheck source=/dev/null
 	source "${supplemental_file_i18n}"
 done
 
+# Load supplemental files
 for supplemental_file in "${supplemental_files[@]}"
 do
 	# shellcheck source=/dev/null
 	source "${supplemental_file}"
 done
+
 
 # unset extglob if it wasn't originally set
 ((extglob_set)) && shopt -u extglob
@@ -161,15 +166,13 @@ done
 
 hotfix_before_environment_setup "$1"
 
-{ _setup_environment \
-	&& hotfix_setup_environment \
-	&& _run_when_connected \
-	&& sleep 5 \
-	&& [[ -f /tmp/.setup-running ]] \
-	&& exit 0
+{
+	{ _setup_environment \
+		&& hotfix_setup_environment \
+		&& _run_when_connected \
+		&& sleep 5 \
+		&& [[ -f /tmp/.setup-running ]] \
+		&& exit 0; \
+	} || { hotfix_run_if_failed && exit 1; }
+
 } >> /tmp/pacman-boot.log 2>&1;
-
-
-hotfix_run_if_failed
-
-exit 1;

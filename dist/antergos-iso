@@ -32,11 +32,14 @@
 ##
 ###
 
-APP_ICON=''
-APP_NAME=''
-CNCHI_STARTED='False'
-IS_MINIMAL='False'
-LOG_PATH='/tmp/pacman-boot'
+if [[ -z "${INITIALIZED}" ]]; then
+	APP_ICON=''
+	APP_NAME=''
+	CNCHI_STARTED='False'
+	IS_MINIMAL='False'
+	LOG_PATH='/tmp/pacman-boot'
+	INITIALIZED='True'
+fi
 
 
 ###
@@ -44,6 +47,16 @@ LOG_PATH='/tmp/pacman-boot'
 # Define Functions
 ##
 ###
+
+pac() {
+	sudo pacman "$1" --noconfirm --force --needed "${@:2}"
+}
+
+
+packey() {
+	sudo pacman-key "$@"
+}
+
 
 hotfix_setup_environment() {
 	_2log "[antergos-iso] Setting up environment.."
@@ -55,13 +68,8 @@ hotfix_setup_environment() {
 	[[ -f /tmp/.setup-running ]] && CNCHI_STARTED='True'
 	[[ -d /home/antergos/.config/openbox ]] && IS_MINIMAL='True'
 
-	alias pacSyy='sudo pacman -Syy --noconfirm --force'
-	alias pacS='sudo pacman -S --noconfirm --force'
-	alias packey_populate='sudo pacman-key --populate archlinux antergos'
-	alias packey_init='sudo pacman-key --init'
-
 	if [[ $(systemd-detect-virt) && 'oracle' = $(systemd-detect-virt -v) ]]; then
-		VBoxClient-all
+		[[ -e /tmp/.VBoxClient-started ]] || VBoxClient-all && touch /tmp/.VBoxClient-started
 	fi
 }
 
@@ -86,7 +94,7 @@ font_patch() {
 
 
 stop_cnchi() {
-	sudo killall -w /usr/bin/cnchi cnchi python && sudo rm /tmp/.setup-running
+	sudo killall -w /usr/bin/cnchi cnchi python && sudo rm /tmp/.setup-running > /dev/null 2>&1
 	sudo systemctl stop pamac > /dev/null 2>&1
 	sudo rm /var/lib/pacman/db.lck > /dev/null 2>&1
 
@@ -119,9 +127,9 @@ notify_no_updates() {
 
 
 populate_pacman_keyring() {
-	{ ${BASH_ALIASES[packey_populate]} && return 0; } || \
-		{ ${BASH_ALIASES[packey_init]} && ${BASH_ALIASES[packey_populate]} && return 0; } || \
-			return 1
+	{ packey --populate archlinux antergos && return 0; } \
+		|| { packey --init &&  packey --populate archlinux antergos && return 0; } \
+			|| return 1
 }
 
 
@@ -132,31 +140,38 @@ hotfix_waiting_for_internet() {
 
 hotfix_maybe_update() {
 	add_or_remove_antbs_mirrorlist 'add'
-	${BASH_ALIASES[pacSyy]} iso-hotfix-utility || populate_pacman_keyring && ${BASH_ALIASES[pacSyy]} iso-hotfix-utility
+	pac -Syy iso-hotfix-utility || populate_pacman_keyring && pac -Syy iso-hotfix-utility
+}
+
+
+_hotfix_checkupdates_requires_fakeroot() {
+	pac -S fakeroot
 }
 
 
 hotfix_run_when_connected() {
 	if [[ 'True' = "${IS_MINIMAL}" ]]; then
-		${BASH_ALIASES[pacS]} numix-icon-theme-square numix-icon-theme numix-frost-themes adwaita-icon-theme
+		pac -S numix-icon-theme-square numix-icon-theme numix-frost-themes adwaita-icon-theme
 	else
 		sudo modprobe -a spl zfs
 	fi
 
+	_hotfix_checkupdates_requires_fakeroot
+
 	local CHECK_UPDATES
 	CHECK_UPDATES=$(sudo checkupdates)
 
-	[[ "${CHECK_UPDATES}" = *'cnchi'* ]] && INSTALL_CNCHI='True'
+	[[ "${CHECK_UPDATES}" = *'cnchi'* ]] && UPDATE_CNCHI='True'
 
-	if [[ ${INSTALL_CNCHI} = 'True' ]]; then
+	if [[ ${UPDATE_CNCHI} = 'True' ]]; then
 		notify_user "${INSTALLING_UPDATES}" "${INSTALLING_UPDATES_SUB}"
 		stop_cnchi
-		${BASH_ALIASES[pacS]} cnchi && LEVEL='normal'; _notify_user "${UPDATE_COMPLETE}" "${UPDATE_COMPLETE_SUB}"
-		start_cnchi && CNCHI_RESTARTED='True'
+		pac -S cnchi && LEVEL='normal'; _notify_user "${UPDATE_COMPLETE}" "${UPDATE_COMPLETE_SUB}"
 	else
 		LEVEL='normal'; notify_no_updates
-		[[ -f /tmp/.setup-running ]] || start_cnchi
 	fi
+
+	[[ -f /tmp/.setup-running ]] || start_cnchi
 }
 
 
