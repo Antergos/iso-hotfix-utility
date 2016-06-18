@@ -59,7 +59,7 @@ _setup_environment() {
 
 	NETWORK_ALIVE=$(ping -c1 8.8.8.8 >/dev/null 2>&1; echo $?)
 
-	if [[ $0 = 'iso-hotfix-utility' ]]; then
+	if [[ $0 = *'iso-hotfix-utility'* ]]; then
 		SCRIPT_UPDATED='True'
 		_2log '[iso-hotfix-utility] Script has been updated.'
 	fi
