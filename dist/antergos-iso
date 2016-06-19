@@ -49,20 +49,33 @@ fi
 ###
 
 pac() {
+	local exit_status
+
 	sudo pacman "$1" --noconfirm --force --needed "${@:2}"
+	exit_status="$?"
+
+	_2log "pac() ran with args: $*. Exit status was: ${exit_status}"
+
+	return "${exit_status}"
 }
 
 
 packey() {
+	local exit_status
+
 	sudo pacman-key "$@"
+	exit_status="$?"
+
+	_2log "packey() ran with args: $*. Exit status was: ${exit_status}"
+
+	return "${exit_status}"
 }
 
 
 hotfix_setup_environment() {
-	_2log "[antergos-iso] Setting up environment.."
+	_2log '[antergos-iso] Setting up environment..'
 	
 	APP_NAME='Cnchi'
-	LEVEL='critical'
 	APP_ICON='/usr/share/cnchi/data/images/antergos/antergos-icon.png'
 
 	[[ -f /tmp/.setup-running ]] && CNCHI_STARTED='True'
@@ -117,6 +130,8 @@ add_or_remove_antbs_mirrorlist() {
 	fi
 
 	sudo rm /var/lib/pacman/db.lck > /dev/null 2>&1
+
+	return 0
 }
 
 
@@ -139,8 +154,9 @@ hotfix_waiting_for_internet() {
 
 
 hotfix_maybe_update() {
+	_notify_user "${CHECKING_UPDATES}" "${CHECKING_UPDATES_SUB}"
 	add_or_remove_antbs_mirrorlist 'add'
-	pac -Syy iso-hotfix-utility || populate_pacman_keyring && pac -Syy iso-hotfix-utility
+	pac -Syy iso-hotfix-utility || { populate_pacman_keyring && pac -Syy iso-hotfix-utility; }
 }
 
 
@@ -161,14 +177,12 @@ hotfix_run_when_connected() {
 	local CHECK_UPDATES
 	CHECK_UPDATES=$(sudo checkupdates)
 
-	[[ "${CHECK_UPDATES}" = *'cnchi'* ]] && UPDATE_CNCHI='True'
-
-	if [[ ${UPDATE_CNCHI} = 'True' ]]; then
+	if [[ "${CHECK_UPDATES}" = *'cnchi'* ]]; then
 		notify_user "${INSTALLING_UPDATES}" "${INSTALLING_UPDATES_SUB}"
 		stop_cnchi
-		pac -S cnchi && LEVEL='normal'; _notify_user "${UPDATE_COMPLETE}" "${UPDATE_COMPLETE_SUB}"
+		pac -S cnchi && { LEVEL='normal' _notify_user "${UPDATE_COMPLETE}" "${UPDATE_COMPLETE_SUB}"; }
 	else
-		LEVEL='normal'; notify_no_updates
+		LEVEL='normal' notify_no_updates
 	fi
 
 	[[ -f /tmp/.setup-running ]] || start_cnchi

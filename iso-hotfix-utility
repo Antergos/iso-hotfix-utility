@@ -32,6 +32,8 @@
 ##
 ###
 
+LEVEL='critical'
+
 if [[ -z "${_INITIALIZED}" ]]; then
 	NETWORK_ALIVE=1
 	NOTIFIED='False'
@@ -39,7 +41,6 @@ if [[ -z "${_INITIALIZED}" ]]; then
 	LAST_SENT=''
 	APP_ICON=''
 	APP_NAME=''
-	LEVEL=''
 	_INITIALIZED='True'
 fi
 
@@ -109,11 +110,10 @@ _maybe_update_rerun_and_exit() {
 		return
 	fi
 
-	_notify_user "${CHECKING_UPDATES}" "${CHECKING_UPDATES_SUB}"
 	hotfix_maybe_update
 
 	if [[ -f /usr/bin/iso-hotfix-utility ]]; then
-		{ nohup /usr/bin/iso-hotfix-utility & >> "${LOG_PATH}" 2>&1; } && exit 0
+		{ nohup /usr/bin/iso-hotfix-utility & } && exit 0
 	else
 		_2log '[iso-hotfix-utility] Failed to update hotifx package!'
 	fi
