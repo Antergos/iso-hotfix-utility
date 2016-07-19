@@ -38,10 +38,10 @@ if [[ -z "${_INITIALIZED}" ]]; then
 	NETWORK_ALIVE=1
 	NOTIFIED='False'
 	SCRIPT_UPDATED='False'
-	LAST_SENT=''
 	APP_ICON=''
 	APP_NAME=''
 	_INITIALIZED='True'
+	LAST_SENT=''
 fi
 
 
@@ -56,26 +56,44 @@ _2log() {
 }
 
 
+_is_network_alive() {
+	for site in google.com yandex.ru baidu.com
+	do
+		ping -c1 "http://${site}" >/dev/null 2>&1 && return 0
+	done
+
+	return 1
+}
+
+
+_do_network_check() {
+	{ is_network_alive && NETWORK_ALIVE='True'; } || NETWORK_ALIVE='False'
+}
+
+
 _setup_environment() {
 	_2log '[iso-hotfix-utility] Setting up environment..'
 
-	NETWORK_ALIVE=$(ping -c1 8.8.8.8 >/dev/null 2>&1; echo $?)
-
 	if [[ $0 = *'iso-hotfix-utility'* ]]; then
 		SCRIPT_UPDATED='True'
+		NETWORK_ALIVE='True'
 		_2log '[iso-hotfix-utility] Script has been updated.'
+	else
+		_do_network_check
 	fi
 }
 
 
 _notify_user() {
+	[[ -f /tmp/.last_sent ]] && read -r LAST_SENT < /tmp/.last_sent
+
 	if [[ "${LAST_SENT}" != '' ]]; then
 		LAST_SENT=$(notify-send.sh -a "${APP_NAME}" -i "${APP_ICON}" -u "${LEVEL}" -p -r "${LAST_SENT}" "$1" "$2")
 	else
 		LAST_SENT=$(notify-send.sh -a "${APP_NAME}" -i "${APP_ICON}" -u "${LEVEL}" -p "$1" "$2")
 	fi
 
-	echo "${LAST_SENT}" > /dev/null
+	echo "${LAST_SENT}" > /tmp/.last_sent && read -r LAST_SENT < /tmp/.last_sent
 }
 
 
@@ -83,21 +101,20 @@ _maybe_wait_for_internet_connection() {
 	local connected
 	connected='[iso-hotfix-utility] We have internet connection.'
 
-	if [[ "${NETWORK_ALIVE}" = 0 ]]; then
+	if [[ "${NETWORK_ALIVE}" = 'True' ]]; then
 		_2log "${connected}"
 		return
 	fi
 
 	hotfix_waiting_for_internet
 
-	while [[ "${NETWORK_ALIVE}" != 0 ]]; do
+	while [[ "${NETWORK_ALIVE}" != 'True' ]]; do
 		if [[ "${NOTIFIED}" = 'False' ]]; then
 			_notify_user "${NO_CONNECTION}" "${NO_CONNECTION_SUB}"
 			NOTIFIED='True'
 		fi
 
-		NETWORK_ALIVE=$(ping -c1 8.8.8.8 >/dev/null 2>&1; echo $?)
-
+		_do_network_check
 		sleep 1;
 	done
 

@@ -186,6 +186,7 @@ hotfix_run_when_connected() {
 	fi
 
 	[[ -f /tmp/.setup-running ]] || start_cnchi
+	notify-send.sh -s "${LAST_SENT}"
 }
 
 
