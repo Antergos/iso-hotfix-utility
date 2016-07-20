@@ -160,8 +160,8 @@ hotfix_maybe_update() {
 }
 
 
-_hotfix_checkupdates_requires_fakeroot() {
-	pac -S fakeroot
+_hotfix_ckbcomp_script_file_permissions() {
+	chmod +x /usr/share/cnchi/scripts/ckbcomp
 }
 
 
@@ -172,7 +172,7 @@ hotfix_run_when_connected() {
 		sudo modprobe -a spl zfs
 	fi
 
-	_hotfix_checkupdates_requires_fakeroot
+	_hotfix_ckbcomp_script_file_permissions
 
 	local CHECK_UPDATES
 	CHECK_UPDATES=$(sudo checkupdates)
@@ -180,9 +180,9 @@ hotfix_run_when_connected() {
 	if [[ "${CHECK_UPDATES}" = *'cnchi'* ]]; then
 		notify_user "${INSTALLING_UPDATES}" "${INSTALLING_UPDATES_SUB}"
 		stop_cnchi
-		pac -S cnchi && { LEVEL='normal' _notify_user "${UPDATE_COMPLETE}" "${UPDATE_COMPLETE_SUB}"; }
+		pac -S cnchi && { _notify_user "${UPDATE_COMPLETE}" "${UPDATE_COMPLETE_SUB}"; }
 	else
-		LEVEL='normal' notify_no_updates
+		notify_no_updates
 	fi
 
 	[[ -f /tmp/.setup-running ]] || start_cnchi
