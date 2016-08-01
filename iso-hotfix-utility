@@ -88,7 +88,7 @@ _notify_user() {
 	[[ -f /tmp/.last_sent ]] && read -r LAST_SENT < /tmp/.last_sent
 
 	if [[ "${LAST_SENT}" != '' ]]; then
-		LAST_SENT=$(notify-send.sh -a "${APP_NAME}" -i "${APP_ICON}" -u "${LEVEL}" -p -r "${LAST_SENT}" "$1" "$2")
+		LAST_SENT=$(notify-send.sh -a "${APP_NAME}" -i "${APP_ICON}" -u "${LEVEL}" -r "${LAST_SENT}" -p "$1" "$2")
 	else
 		LAST_SENT=$(notify-send.sh -a "${APP_NAME}" -i "${APP_ICON}" -u "${LEVEL}" -p "$1" "$2")
 	fi

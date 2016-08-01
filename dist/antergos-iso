@@ -107,16 +107,17 @@ font_patch() {
 
 
 stop_cnchi() {
-	sudo killall -w /usr/bin/cnchi cnchi python && sudo rm /tmp/.setup-running > /dev/null 2>&1
-	sudo systemctl stop pamac > /dev/null 2>&1
-	sudo rm /var/lib/pacman/db.lck > /dev/null 2>&1
+	{ sudo killall -w /usr/bin/cnchi cnchi python
+		sudo rm /tmp/.setup-running
+		sudo systemctl stop pamac
+		sudo rm /var/lib/pacman/db.lck; } > /dev/null 2>&1
 
 	return 0
 }
 
 
 start_cnchi() {
-	stop_cnchi && sudo -E cnchi -d -v -s bugsnag &
+	stop_cnchi && /usr/bin/cnchi -s bugsnag &
 
 	return 0;
 }
@@ -161,7 +162,15 @@ hotfix_maybe_update() {
 
 
 _hotfix_ckbcomp_script_file_permissions() {
-	chmod +x /usr/share/cnchi/scripts/ckbcomp
+	local _file
+	_file='/usr/share/cnchi/scripts/ckbcomp'
+	[[ -x "${_file}" ]] || { _2log '_file is not executable! fixing...'; sudo chmod +x "${_file}"; }
+}
+
+
+_hotfix_cnchi_polkit_policy() {
+	sudo systemctl restart polkit
+	sudo sed -r -i 's|\/usr.+\.py|pkexec cnchi|g' '/usr/bin/cnchi'
 }
 
 
@@ -184,6 +193,8 @@ hotfix_run_when_connected() {
 	else
 		notify_no_updates
 	fi
+
+	_hotfix_cnchi_polkit_policy
 
 	[[ -f /tmp/.setup-running ]] || start_cnchi
 	notify-send.sh -s "${LAST_SENT}"
