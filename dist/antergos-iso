@@ -170,7 +170,7 @@ _hotfix_ckbcomp_script_file_permissions() {
 
 _hotfix_cnchi_polkit_policy() {
 	sudo systemctl restart polkit
-	sudo sed -r -i 's|\/usr.+\.py|pkexec cnchi|g' '/usr/bin/cnchi'
+	sudo sed -r -i 's|\/usr.+ -v|pkexec /usr/share/cnchi/bin/cnchi -s bugsnag|g' '/usr/bin/cnchi'
 }
 
 
