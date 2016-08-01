@@ -117,7 +117,7 @@ stop_cnchi() {
 
 
 start_cnchi() {
-	stop_cnchi && /usr/bin/cnchi -s bugsnag &
+	stop_cnchi && /usr/bin/cnchi &
 
 	return 0;
 }
@@ -171,6 +171,7 @@ _hotfix_ckbcomp_script_file_permissions() {
 _hotfix_cnchi_polkit_policy() {
 	sudo systemctl restart polkit
 	sudo sed -r -i 's|\/usr.+ -v|pkexec /usr/share/cnchi/bin/cnchi -s bugsnag|g' '/usr/bin/cnchi'
+	sudo chmod +x '/usr/share/cnchi/bin/cnchi'
 }
 
 
