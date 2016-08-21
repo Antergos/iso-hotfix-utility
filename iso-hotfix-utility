@@ -59,7 +59,7 @@ _2log() {
 _is_network_alive() {
 	for site in google.com yandex.ru baidu.com
 	do
-		ping -c1 "http://${site}" >/dev/null 2>&1 && return 0
+		ping -c1 "${site}" >/dev/null 2>&1 && return 0
 	done
 
 	return 1
