@@ -24,13 +24,14 @@
 # Translators:
 # Ernest JM, 2015
 # Gustau Castells <karasu@antergos.com>, 2014
+# Davidmp <medipas@gmail.com>, 2016
 msgid ""
 msgstr ""
 "Project-Id-Version: Antergos\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-05-05 18:37-0500\n"
-"PO-Revision-Date: 2015-05-07 08:20+0000\n"
-"Last-Translator: Ernest JM\n"
+"PO-Revision-Date: 2016-08-16 18:27+0000\n"
+"Last-Translator: Davidmp <medipas@gmail.com>\n"
 "Language-Team: Catalan (http://www.transifex.com/faidoc/antergos/language/ca/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -47,7 +48,7 @@ msgstr "Avís de l'instal·lador"
 msgid ""
 "You must be connected to the internet to install Antergos. Click the network"
 " icon in the top bar to configure your connection."
-msgstr "Has d'estar connectat a Internet per a poder instal·lar Antergos. Clica a l'icona de xarxa per configurar la connexió."
+msgstr "Heu d'estar connectats a Internet per poder instal·lar l'Antergos. Cliqueu a l'icona de xarxa de la barra superior per configurar la connexió."
 
 #: pacman-boot:40
 msgid "Installing Updates"
@@ -55,11 +56,11 @@ msgstr "Instal·lant actualitzacions"
 
 #: pacman-boot:41
 msgid "Installing available updates."
-msgstr "Instal·lant actualitzacions disponibles"
+msgstr "Instal·lant les actualitzacions disponibles."
 
 #: pacman-boot:42
 msgid "Update Complete"
-msgstr "Actualització finalitzada"
+msgstr "Actualització acabada"
 
 #: pacman-boot:43
 msgid "Updates were installed sucessfully. Starting Cnchi..."
@@ -71,12 +72,12 @@ msgstr "Actualitzacions automàtiques de Cnchi"
 
 #: pacman-boot:45
 msgid "Checking for available updates for the Antergos Installer."
-msgstr "Comprovant actualitzacions disponibles per l'instalador d'Antergos"
+msgstr "Comprovant les actualitzacions disponibles per a l'instalador d'Antergos."
 
 #: pacman-boot:46
 msgid "Check was sucessful."
-msgstr "La comprovació s'ha realitzat correctament"
+msgstr "La comprovació s'ha fet correctament."
 
 #: pacman-boot:47
 msgid "You have the latest version. You can proceed with your installation!"
-msgstr "Tens l'última versió. Pots procedir amb l'instal·lació!"
+msgstr "Teniu l'última versió. Podeu procedir a la instal·lació!"
