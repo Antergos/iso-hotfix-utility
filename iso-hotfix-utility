@@ -67,7 +67,7 @@ _is_network_alive() {
 
 
 _do_network_check() {
-	{ is_network_alive && NETWORK_ALIVE='True'; } || NETWORK_ALIVE='False'
+	{ _is_network_alive && NETWORK_ALIVE='True'; } || NETWORK_ALIVE='False'
 }
 
 
