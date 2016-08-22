@@ -172,6 +172,7 @@ _hotfix_cnchi_polkit_policy() {
 	sudo systemctl restart polkit
 	sudo sed -r -i 's|\/usr.+ -v|pkexec /usr/share/cnchi/bin/cnchi -s bugsnag|g' '/usr/bin/cnchi'
 	sudo chmod +x '/usr/share/cnchi/bin/cnchi'
+	sudo sed -i 's|Lato|"Open Sans"|g' /usr/share/cnchi/data/css/gtk-style.css
 }
 
 
@@ -198,7 +199,7 @@ hotfix_run_when_connected() {
 	_hotfix_cnchi_polkit_policy
 
 	[[ -f /tmp/.setup-running ]] || start_cnchi
-	notify-send.sh -s "${LAST_SENT}"
+	sleep 5 && notify-send.sh -s "${LAST_SENT}"
 }
 
 
