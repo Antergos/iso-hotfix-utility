@@ -174,10 +174,16 @@ _hotfix_cnchi_polkit_policy() {
 	sudo chmod +x '/usr/share/cnchi/bin/cnchi'
 }
 
+
 _hotfix_cnchi_font_css() {
 	sudo sed -i \
 		"s| Lato| \"Open Sans\"|g;
 		s| 'Lato'| \"Open Sans\"|g;" /usr/share/cnchi/data/css/gtk-style.css
+}
+
+
+_hotfix_gtk_theme_for_root() {
+	sudo cp -R /home/antergos/.config /root
 }
 
 
@@ -190,6 +196,7 @@ hotfix_run_when_connected() {
 
 	_hotfix_ckbcomp_script_file_permissions
 	_hotfix_cnchi_font_css
+	_hotfix_gtk_theme_for_root
 
 	local CHECK_UPDATES
 	CHECK_UPDATES=$(sudo checkupdates)
