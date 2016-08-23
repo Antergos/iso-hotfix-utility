@@ -164,7 +164,7 @@ hotfix_maybe_update() {
 _hotfix_ckbcomp_script_file_permissions() {
 	local _file
 	_file='/usr/share/cnchi/scripts/ckbcomp'
-	[[ -x "${_file}" ]] || { _2log '_file is not executable! fixing...'; sudo chmod +x "${_file}"; }
+	[[ -x "${_file}" ]] || { _2log "${_file} is not executable! fixing..."; sudo chmod +x "${_file}"; }
 }
 
 
@@ -224,4 +224,10 @@ hotfix_before_environment_setup() {
 		exit 0
 	fi 
 }
+
+
+hotfix_run_if_failed() {
+	true
+}
+
 
