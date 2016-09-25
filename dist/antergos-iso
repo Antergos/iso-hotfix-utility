@@ -165,20 +165,7 @@ _hotfix_ckbcomp_script_file_permissions() {
 	local _file
 	_file='/usr/share/cnchi/scripts/ckbcomp'
 	[[ -x "${_file}" ]] || { _2log "${_file} is not executable! fixing..."; sudo chmod +x "${_file}"; }
-}
-
-
-_hotfix_cnchi_polkit_policy() {
-	sudo systemctl restart polkit
-	sudo sed -r -i 's|\/usr.+ -v|pkexec /usr/share/cnchi/bin/cnchi -s bugsnag|g' '/usr/bin/cnchi'
 	sudo chmod +x '/usr/share/cnchi/bin/cnchi'
-}
-
-
-_hotfix_cnchi_font_css() {
-	sudo sed -i \
-		"s| Lato| \"Open Sans\"|g;
-		s| 'Lato'| \"Open Sans\"|g;" /usr/share/cnchi/data/css/gtk-style.css
 }
 
 
@@ -195,7 +182,6 @@ hotfix_run_when_connected() {
 	fi
 
 	_hotfix_ckbcomp_script_file_permissions
-	_hotfix_cnchi_font_css
 	_hotfix_gtk_theme_for_root
 
 	local CHECK_UPDATES
@@ -208,8 +194,6 @@ hotfix_run_when_connected() {
 	else
 		notify_no_updates
 	fi
-
-	_hotfix_cnchi_polkit_policy
 
 	[[ -f /tmp/.setup-running ]] || start_cnchi
 	sleep 5 && notify-send.sh -s "${LAST_SENT}"
