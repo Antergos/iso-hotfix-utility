@@ -195,6 +195,9 @@ hotfix_run_when_connected() {
 		notify_no_updates
 	fi
 
+	# Install blocking packaging issue flag
+	touch /tmp/.packaging_issue
+
 	[[ -f /tmp/.setup-running ]] || start_cnchi
 	sleep 5 && notify-send.sh -s "${LAST_SENT}"
 }
