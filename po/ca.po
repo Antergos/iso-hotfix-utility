@@ -1,36 +1,14 @@
-# -*- coding: utf-8 -*-
-# 
-#  CNCHI_UPDATER.pot
-# 
-#  Copyright Â© 2013-2015 Antergos
-# 
-#  This file is part of Cnchi.
-# 
-#  Cnchi is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-# 
-#  Cnchi is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-# 
-#  You should have received a copy of the GNU General Public License
-#  along with Cnchi; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-#  MA 02110-1301, USA.
 # 
 # Translators:
 # Ernest JM, 2015
 # Gustau Castells <karasu@antergos.com>, 2014
-# Davidmp <medipas@gmail.com>, 2016
+# Davidmp <medipas@gmail.com>, 2016,2018
 msgid ""
 msgstr ""
 "Project-Id-Version: Antergos\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-05-05 18:37-0500\n"
-"PO-Revision-Date: 2016-08-16 18:27+0000\n"
+"PO-Revision-Date: 2018-08-18 11:58+0000\n"
 "Last-Translator: Davidmp <medipas@gmail.com>\n"
 "Language-Team: Catalan (http://www.transifex.com/faidoc/antergos/language/ca/)\n"
 "MIME-Version: 1.0\n"
@@ -42,7 +20,7 @@ msgstr ""
 
 #: pacman-boot:38
 msgid "INSTALLER NOTICE:"
-msgstr "Avís de l'instal·lador"
+msgstr "AVÍS DE L'INSTAL·LADOR:"
 
 #: pacman-boot:39
 msgid ""
@@ -52,31 +30,31 @@ msgstr "Heu d'estar connectats a Internet per poder instal·lar l'Antergos. Cliq
 
 #: pacman-boot:40
 msgid "Installing Updates"
-msgstr "Instal·lant actualitzacions"
+msgstr "S'instal·len les actualitzacions."
 
 #: pacman-boot:41
 msgid "Installing available updates."
-msgstr "Instal·lant les actualitzacions disponibles."
+msgstr "S'instal·len les actualitzacions disponibles."
 
 #: pacman-boot:42
 msgid "Update Complete"
-msgstr "Actualització acabada"
+msgstr "Actualització acabada!"
 
 #: pacman-boot:43
 msgid "Updates were installed sucessfully. Starting Cnchi..."
-msgstr "Les actualitzacions s'han instal·lat correctament. Iniciant Cnchi..."
+msgstr "Les actualitzacions s'han instal·lat correctament. S'inicia el Cnchi..."
 
 #: pacman-boot:44
 msgid "Cnchi Automatic Updates"
-msgstr "Actualitzacions automàtiques de Cnchi"
+msgstr "Actualitzacions automàtiques del Cnchi"
 
 #: pacman-boot:45
 msgid "Checking for available updates for the Antergos Installer."
-msgstr "Comprovant les actualitzacions disponibles per a l'instalador d'Antergos."
+msgstr "Es comprova si hi ha actualitzacions disponibles per a l'instal·lador de l'Antergos."
 
 #: pacman-boot:46
 msgid "Check was sucessful."
-msgstr "La comprovació s'ha fet correctament."
+msgstr "La comprovació és correcta."
 
 #: pacman-boot:47
 msgid "You have the latest version. You can proceed with your installation!"

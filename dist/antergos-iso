@@ -173,9 +173,11 @@ _hotfix_gtk_theme_for_root() {
 	sudo cp -R /home/antergos/.config /root
 }
 
+
 _hotfix_enable_multilib_repo() {
 	sed -i 's|#[multilib]|[multilib]\nInclude = /etc/pacman.d/mirrorlist|g' /etc/pacman.conf
 }
+
 
 hotfix_run_when_connected() {
 	_hotfix_enable_multilib_repo
