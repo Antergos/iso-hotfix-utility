@@ -51,7 +51,7 @@ fi
 pac() {
 	local exit_status
 
-	sudo pacman "$1" --noconfirm --force --needed "${@:2}"
+	sudo pacman "$1" --noconfirm --overwrite --needed "${@:2}"
 	exit_status="$?"
 
 	_2log "pac() ran with args: $*. Exit status was: ${exit_status}"
@@ -175,7 +175,7 @@ _hotfix_gtk_theme_for_root() {
 
 
 _hotfix_enable_multilib_repo() {
-	sed -i 's|#[multilib]|[multilib]\nInclude = /etc/pacman.d/mirrorlist|g' /etc/pacman.conf
+	sudo sed -i 's|#[multilib]|[multilib]\nInclude = /etc/pacman.d/mirrorlist|g' /etc/pacman.conf
 }
 
 
@@ -187,6 +187,8 @@ hotfix_run_when_connected() {
 	else
 		sudo modprobe -a spl zfs
 	fi
+
+	pac -S pacman-contrib
 
 	_hotfix_ckbcomp_script_file_permissions
 	_hotfix_gtk_theme_for_root
